@@ -39,16 +39,17 @@ import javax.servlet.http.HttpSessionListener;
  * SOURCE - show class originating this event
  * SESSION - show session info like sessionid, maxexpiry, etc
  * THREAD - show thread info
- * ATTRIBUTES - show all session attributes
+ * ALL_ATTRIBUTES - show all session attributes
+ * CHANGED_ATTRIBUTE - show only the changed session attribute (if applicable)
  * ALL - show all of the above
  * 
  * multiple options can be used, comma delimited. E.g.
  * 
  * -DMySessionListener.sessionCreated=SESSION,THREAD
  * -DMySessionListener.sessionDestroyed=ALL
- * -DMySessionListener.attributeReplaced=ATTRIBUTES
- * -DMySessionListener.attributeAdded=ATTRIBUTES
- * -DMySessionListener.attributeRemoved=ATTRIBUTES
+ * -DMySessionListener.attributeReplaced=CHANGED_ATTRIBUTE
+ * -DMySessionListener.attributeAdded=CHANGED_ATTRIBUTE
+ * -DMySessionListener.attributeRemoved=CHANGED_ATTRIBUTE
  * 
  * @author Phil Gleghorn
  */
@@ -63,7 +64,8 @@ public class MySessionListener implements HttpSessionListener,
 	private final String SESSION = "SESSION";
 	private final String THREAD = "THREAD";
 	private final String SOURCE = "SOURCE";
-	private final String ATTRIBUTES = "ATTRIBUTES";
+	private final String ALL_ATTRIBUTES = "ALL_ATTRIBUTES";
+	private final String CHANGED_ATTRIBUTE = "CHANGED_ATTRIBUTE";
 	private final String ALL = "ALL";
 
 	private boolean isConfigured(String method, String configtype) {
@@ -75,7 +77,7 @@ public class MySessionListener implements HttpSessionListener,
 	}
 
 	private void showInfo(String method, String source, String clazz,
-			HttpSession hs, Thread t) {
+			HttpSession hs, Thread t, String name, Object value) {
 		if (isConfigured(method, SOURCE) || isConfigured(method, ALL)) {
 			log(method + "() source=" + source + ", class=" + clazz);
 		}
@@ -104,17 +106,20 @@ public class MySessionListener implements HttpSessionListener,
 			log(method + "() thread priority=" + t.getPriority());
 			log(method + "() thread state=" + t.getState().toString());
 		}
-		if (isConfigured(method, ATTRIBUTES) || isConfigured(method, ALL)) {
+		if (isConfigured(method, ALL_ATTRIBUTES) || isConfigured(method, ALL)) {
 			try {
 				Enumeration<String> attrNames = hs.getAttributeNames();
 				while (attrNames.hasMoreElements()) {
 					String attrName = attrNames.nextElement();
-					log(method + "() attribute " + attrName + "="
+					log(method + "() all_attributes " + attrName + "="
 							+ hs.getAttribute(attrName));
 				}
 			} catch (IllegalStateException e) {
 				// log(e.toString());
 			}
+		}
+		if (isConfigured(method, CHANGED_ATTRIBUTE) || isConfigured(method, CHANGED_ATTRIBUTE)) {
+			log(method + "() changed_attribute " + name + "=" + value);
 		}
 	}
 
@@ -157,7 +162,7 @@ public class MySessionListener implements HttpSessionListener,
 	public void attributeRemoved(HttpSessionBindingEvent arg0) {
 		showInfo("attributeRemoved", arg0.getSource().toString(), arg0
 				.getClass().toString(), arg0.getSession(),
-				Thread.currentThread());
+				Thread.currentThread(), arg0.getName(), arg0.getValue());
 	}
 
 	/**
@@ -165,15 +170,16 @@ public class MySessionListener implements HttpSessionListener,
 	 */
 	public void attributeAdded(HttpSessionBindingEvent arg0) {
 		showInfo("attributeAdded", arg0.getSource().toString(), arg0.getClass()
-				.toString(), arg0.getSession(), Thread.currentThread());
+				.toString(), arg0.getSession(), Thread.currentThread(), arg0.getName(), arg0.getValue());
 	}
 
 	/**
 	 * @see HttpSessionBindingListener#valueUnbound(HttpSessionBindingEvent)
 	 */
 	public void valueUnbound(HttpSessionBindingEvent arg0) {
+		log("valueUnbound() called for " + arg0.getName() + "=" + arg0.getValue());
 		showInfo("valueUnbound", arg0.getSource().toString(), arg0.getClass()
-				.toString(), arg0.getSession(), Thread.currentThread());
+				.toString(), arg0.getSession(), Thread.currentThread(), arg0.getName(), arg0.getValue());
 	}
 
 	/**
@@ -182,15 +188,15 @@ public class MySessionListener implements HttpSessionListener,
 	public void sessionDidActivate(HttpSessionEvent arg0) {
 		showInfo("sessionDidActivate", arg0.getSource().toString(), arg0
 				.getClass().toString(), arg0.getSession(),
-				Thread.currentThread());
+				Thread.currentThread(), "", "");
 	}
 
 	/**
 	 * @see HttpSessionActivationListener#sessionWillPassivate(HttpSessionEvent)
 	 */
 	public void sessionWillPassivate(HttpSessionEvent arg0) {
-		showInfo("sessionWillPassivate", arg0.getSource().toString(), arg0.getClass()
-				.toString(), arg0.getSession(), Thread.currentThread());
+		showInfo("valueBound", arg0.getSource().toString(), arg0.getClass()
+				.toString(), arg0.getSession(), Thread.currentThread(), "", "");
 	}
 
 	/**
@@ -198,7 +204,7 @@ public class MySessionListener implements HttpSessionListener,
 	 */
 	public void valueBound(HttpSessionBindingEvent arg0) {
 		showInfo("valueBound", arg0.getSource().toString(), arg0.getClass()
-				.toString(), arg0.getSession(), Thread.currentThread());
+				.toString(), arg0.getSession(), Thread.currentThread(), arg0.getName(), arg0.getValue());
 	}
 
 	/**
@@ -207,7 +213,7 @@ public class MySessionListener implements HttpSessionListener,
 	public void attributeReplaced(HttpSessionBindingEvent arg0) {
 		showInfo("attributeReplaced", arg0.getSource().toString(), arg0
 				.getClass().toString(), arg0.getSession(),
-				Thread.currentThread());
+				Thread.currentThread(), arg0.getName(), arg0.getValue());
 	}
 
 	/**
@@ -215,7 +221,7 @@ public class MySessionListener implements HttpSessionListener,
 	 */
 	public void sessionCreated(HttpSessionEvent arg0) {
 		showInfo("sessionCreated", arg0.getSource().toString(), arg0.getClass()
-				.toString(), arg0.getSession(), Thread.currentThread());
+				.toString(), arg0.getSession(), Thread.currentThread(), "", "");
 	}
 
 	/**
@@ -224,7 +230,7 @@ public class MySessionListener implements HttpSessionListener,
 	public void sessionDestroyed(HttpSessionEvent arg0) {
 		showInfo("sessionDestroyed", arg0.getSource().toString(), arg0
 				.getClass().toString(), arg0.getSession(),
-				Thread.currentThread());
+				Thread.currentThread(), "", "");
 	}
 
 }
