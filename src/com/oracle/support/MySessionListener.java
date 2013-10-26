@@ -189,7 +189,7 @@ public class MySessionListener implements HttpSessionListener,
 	 * @see HttpSessionActivationListener#sessionWillPassivate(HttpSessionEvent)
 	 */
 	public void sessionWillPassivate(HttpSessionEvent arg0) {
-		showInfo("valueBound", arg0.getSource().toString(), arg0.getClass()
+		showInfo("sessionWillPassivate", arg0.getSource().toString(), arg0.getClass()
 				.toString(), arg0.getSession(), Thread.currentThread());
 	}
 
