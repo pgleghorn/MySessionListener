@@ -5,7 +5,7 @@
     
     where methodName is one of
     
-    attributeRemoved
+    attributeAdded
     attributeReplaced
     attributeRemoved
     valueUnbound
