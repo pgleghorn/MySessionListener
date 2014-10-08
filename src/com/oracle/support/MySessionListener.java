@@ -177,7 +177,6 @@ public class MySessionListener implements HttpSessionListener,
 	 * @see HttpSessionBindingListener#valueUnbound(HttpSessionBindingEvent)
 	 */
 	public void valueUnbound(HttpSessionBindingEvent arg0) {
-		log("valueUnbound() called for " + arg0.getName() + "=" + arg0.getValue());
 		showInfo("valueUnbound", arg0.getSource().toString(), arg0.getClass()
 				.toString(), arg0.getSession(), Thread.currentThread(), arg0.getName(), arg0.getValue());
 	}
@@ -195,7 +194,7 @@ public class MySessionListener implements HttpSessionListener,
 	 * @see HttpSessionActivationListener#sessionWillPassivate(HttpSessionEvent)
 	 */
 	public void sessionWillPassivate(HttpSessionEvent arg0) {
-		showInfo("valueBound", arg0.getSource().toString(), arg0.getClass()
+		showInfo("sessionWillPassivate", arg0.getSource().toString(), arg0.getClass()
 				.toString(), arg0.getSession(), Thread.currentThread(), "", "");
 	}
 
