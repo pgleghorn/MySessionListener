@@ -118,7 +118,7 @@ public class MySessionListener implements HttpSessionListener,
 				// log(e.toString());
 			}
 		}
-		if (isConfigured(method, CHANGED_ATTRIBUTE) || isConfigured(method, CHANGED_ATTRIBUTE)) {
+		if (isConfigured(method, CHANGED_ATTRIBUTE) || isConfigured(method, ALL)) {
 			log(method + "() changed_attribute " + name + "=" + value);
 		}
 	}
