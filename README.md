@@ -22,62 +22,103 @@
     SESSION - show session info like sessionid, maxexpiry, etc
     THREAD - show thread info
     ALL_ATTRIBUTES - show all session attributes
-    CHANGED_ATTRIBUTE - show only the changed session attribute (if applicable)
-    ALL - show all of the above
+    ATTRIBUTE - show the changed/added/removed session attribute (if applicable)
+    VALUE - show the bound/unbound value (if applicable)
     
-    multiple options can be used, comma delimited. E.g.
+    multiple options can be used, comma delimited. In example of configured provided via tomcat's setenv.sh:
     
-    -DMySessionListener.sessionCreated=SESSION,THREAD
-    -DMySessionListener.sessionDestroyed=ALL
-    -DMySessionListener.attributeReplaced=CHANGED_ATTRIBUTE
-    -DMySessionListener.attributeAdded=CHANGED_ATTRIBUTE
-    -DMySessionListener.attributeRemoved=CHANGED_ATTRIBUTE
+    JAVA_OPTS=" ${JAVA_OPTS} \
+    -DMySessionListener.sessionCreated=SESSION,THREAD,ALL_ATTRIBUTES,STACK \
+    -DMySessionListener.sessionDestroyed=SESSION,THREAD,ALL_ATTRIBUTES,STACK \
+    -DMySessionListener.attributeReplaced=SESSION,ATTRIBUTE \
+    -DMySessionListener.attributeAdded=SESSION,ATTRIBUTE \
+    -DMySessionListener.attributeRemoved=SESSION,ATTRIBUTE \
+    -DMySessionListener.valueBound=SESSION,VALUE \
+    -DMySessionListener.valueUnbound=SESSION,VALUE "
 
-    To install, copy the jar into <cs_deployed_webapp>/WEB-INF/lib, and edit web.xml to add the listener:
+    To install, copy the jar into <your_deployed_webapp>/WEB-INF/lib, and edit web.xml to add the listener as the last entry in the <listeners> block:
     
+    <listeners>
+    ...
     <listener>
     <listener-class>com.oracle.support.MySessionListener</listener-class>
     </listener>
+    <listeners>
     
-    Output is written to application server stdout (e.g catalina.out in case of tomcat). Example output (Using
-        -DMySessionListener.sessionCreated=SESSION,THREAD
-        -DMySessionListener.sessionDestroyed=ALL
-    ) is as follows:
+    Output is written to application server stdout, first which confirms the configuration in use:
     
-    t103: sessionCreated() session id=D7EB3D94BC2C68EB471A935888A7282A
-    t103: sessionCreated() session creation time=1382961605616 (Mon Oct 28 08:00:05 EDT 2013)
-    t103: sessionCreated() session last accessed time=1382961605616 (Mon Oct 28 08:00:05 EDT 2013)
-    t103: sessionCreated() session max inactive interval=1800
-    t103: sessionCreated() thread id=103
-    t103: sessionCreated() thread name=http-bio-8080-exec-7
-    t103: sessionCreated() thread priority=5
-    t103: sessionCreated() thread state=RUNNABLE
+    Mon Jan 26 09:23:16 EST 2015 tid=12: Hello from MySessionListener
+    found configuration attributeReplaced with SESSION
+    found configuration attributeReplaced with ATTRIBUTE
+    found configuration attributeAdded with SESSION
+    found configuration attributeAdded with ATTRIBUTE
+    found configuration sessionCreated with SESSION
+    found configuration sessionCreated with THREAD
+    found configuration sessionCreated with ALL_ATTRIBUTES
+    found configuration sessionCreated with STACK
+    found configuration valueBound with SESSION
+    found configuration valueBound with VALUE
+    found configuration valueUnbound with SESSION
+    found configuration valueUnbound with VALUE
+    found configuration attributeRemoved with SESSION
+    found configuration attributeRemoved with ATTRIBUTE
+    found configuration sessionDestroyed with SESSION
+    found configuration sessionDestroyed with THREAD
+    found configuration sessionDestroyed with ALL_ATTRIBUTES
+    found configuration sessionDestroyed with STACK
     
-    t89: sessionDestroyed() source=org.apache.catalina.session.StandardSessionFacade@3d56c72b, class=class javax.servlet.http.HttpSessionEvent
-    t89: sessionDestroyed() stack java.lang.Thread.getStackTrace() [Thread.java:1436]
-    t89: sessionDestroyed() stack com.oracle.support.MySessionListener.showInfo() [MySessionListener.java:85]
-    t89: sessionDestroyed() stack com.oracle.support.MySessionListener.sessionDestroyed() [MySessionListener.java:231]
-    t89: sessionDestroyed() stack org.apache.catalina.session.StandardSession.expire() [StandardSession.java:806]
-    t89: sessionDestroyed() stack org.apache.catalina.session.StandardSession.isValid() [StandardSession.java:658]
-    t89: sessionDestroyed() stack org.apache.catalina.session.ManagerBase.processExpires() [ManagerBase.java:534]
-    t89: sessionDestroyed() stack org.apache.catalina.session.ManagerBase.backgroundProcess() [ManagerBase.java:519]
-    t89: sessionDestroyed() stack org.apache.catalina.core.ContainerBase.backgroundProcess() [ContainerBase.java:1352]
-    t89: sessionDestroyed() stack org.apache.catalina.core.ContainerBase$ContainerBackgroundProcessor.processChildren() [ContainerBase.java:1530]
-    t89: sessionDestroyed() stack org.apache.catalina.core.ContainerBase$ContainerBackgroundProcessor.processChildren() [ContainerBase.java:1540]
-    t89: sessionDestroyed() stack org.apache.catalina.core.ContainerBase$ContainerBackgroundProcessor.processChildren() [ContainerBase.java:1540]
-    t89: sessionDestroyed() stack org.apache.catalina.core.ContainerBase$ContainerBackgroundProcessor.run() [ContainerBase.java:1519]
-    t89: sessionDestroyed() stack java.lang.Thread.run() [Thread.java:619]
-    t89: sessionDestroyed() session id=42C0EFEAAD46AB71AD51C7D7857D4C3F
-    t89: sessionDestroyed() session creation time=1382871676065 (Sun Oct 27 07:01:16 EDT 2013)
-    t89: sessionDestroyed() session last accessed time=1382871722033 (Sun Oct 27 07:02:02 EDT 2013)
-    t89: sessionDestroyed() session max inactive interval=90000
-    t89: sessionDestroyed() thread id=89
-    t89: sessionDestroyed() thread name=ContainerBackgroundProcessor[StandardEngine[Catalina]]
-    t89: sessionDestroyed() thread priority=5
-    t89: sessionDestroyed() thread state=RUNNABLE
-    t89: sessionDestroyed() all_attributes _authkey_=AD5500E05C75403AE99EA31352A1B9C499139B35498C668B6F4E749237B351C1A877134F3C5D06F18B5187823D841A59
-    t89: sessionDestroyed() all_attributes username=phil
-    t89: sessionDestroyed() all_attributes currentUser=1378452090066
-    t89: sessionDestroyed() all_attributes currentUserPassword={AES}5841F60B59B976AEA4EDC1E18ECF52DE
-    t89: sessionDestroyed() all_attributes currentACL=Browser,ElementEditor,ElementReader,PageEditor,PageReader,RemoteClient,SiteGod,TableEditor,UserEditor,UserReader,Visitor,VisitorAdmin,WSAdmin,WSEditor,WSUser,xceladmin,xceleditor,xcelpublish
-    t89: sessionDestroyed() all_attributes csrfuuid=08afea07-1b33-4636-ab70-7eb2f883fc99
+    and then subsequent session event messages like:
+    
+    Mon Jan 26 09:26:09 EST 2015 tid=96: ----------begin--------->
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() stack java.lang.Thread.getStackTrace() [Thread.java:1436]
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() stack com.oracle.support.MySessionListener.showInfo() [MySessionListener.java:97]
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() stack com.oracle.support.MySessionListener.sessionCreated() [MySessionListener.java:271]
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() stack org.apache.catalina.session.StandardSession.tellNew() [StandardSession.java:423]
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() stack org.apache.catalina.session.StandardSession.setId() [StandardSession.java:395]
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() stack org.apache.catalina.session.StandardSession.setId() [StandardSession.java:376]
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() stack org.apache.catalina.session.ManagerBase.createSession() [ManagerBase.java:655]
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() stack org.apache.catalina.connector.Request.doGetSession() [Request.java:2898]
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() stack org.apache.catalina.connector.Request.getSession() [Request.java:2316]
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() stack org.apache.catalina.connector.RequestFacade.getSession() [RequestFacade.java:898]
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() stack COM.FutureTense.Servlet.ServletRequest.getSession() [ServletRequest.java:1266]
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() stack COM.FutureTense.Servlet.FRequestObj.getSession() [FRequestObj.java:457]
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() stack COM.FutureTense.Access.AccessEngine.newSession() [AccessEngine.java:754]
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() stack COM.FutureTense.Access.AccessEngine.doLogin() [AccessEngine.java:470]
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() stack COM.FutureTense.Access.AccessEngine.doLogin() [AccessEngine.java:403]
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() stack COM.FutureTense.Common.ftAppLogic.checkLogin() [ftAppLogic.java:3262]
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() stack COM.FutureTense.Common.ContentServer._doCheckLogin() [ContentServer.java:590]
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() stack COM.FutureTense.Common.ContentServer.execute() [ContentServer.java:458]
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() stack COM.FutureTense.Servlet.FTServlet.execute() [FTServlet.java:129]
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() stack COM.FutureTense.Servlet.FTServlet.doPost() [FTServlet.java:61]
+    ...
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() session id=CC176AE6928989DFE52683E664E92EE6
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() session creation time=1422282369005 (Mon Jan 26 09:26:09 EST 2015)
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() session last accessed time=1422282369005 (Mon Jan 26 09:26:09 EST 2015)
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() session max inactive interval=1800
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() thread id=96
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() thread name=http-bio-8443-exec-1
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() thread priority=5
+    Mon Jan 26 09:26:09 EST 2015 tid=96: sessionCreated() thread state=RUNNABLE
+    Mon Jan 26 09:26:09 EST 2015 tid=96: <----------end----------
+    Mon Jan 26 09:26:09 EST 2015 tid=96: ----------begin--------->
+    Mon Jan 26 09:26:09 EST 2015 tid=96: attributeAdded() session id=CC176AE6928989DFE52683E664E92EE6
+    Mon Jan 26 09:26:09 EST 2015 tid=96: attributeAdded() session creation time=1422282369005 (Mon Jan 26 09:26:09 EST 2015)
+    Mon Jan 26 09:26:09 EST 2015 tid=96: attributeAdded() session last accessed time=1422282369005 (Mon Jan 26 09:26:09 EST 2015)
+    Mon Jan 26 09:26:09 EST 2015 tid=96: attributeAdded() session max inactive interval=90000
+    Mon Jan 26 09:26:09 EST 2015 tid=96: attributeAdded() attribute username=DefaultReader
+    Mon Jan 26 09:26:09 EST 2015 tid=96: <----------end----------
+    Mon Jan 26 09:26:09 EST 2015 tid=96: ----------begin--------->
+    Mon Jan 26 09:26:09 EST 2015 tid=96: attributeAdded() session id=CC176AE6928989DFE52683E664E92EE6
+    Mon Jan 26 09:26:09 EST 2015 tid=96: attributeAdded() session creation time=1422282369005 (Mon Jan 26 09:26:09 EST 2015)
+    Mon Jan 26 09:26:09 EST 2015 tid=96: attributeAdded() session last accessed time=1422282369005 (Mon Jan 26 09:26:09 EST 2015)
+    Mon Jan 26 09:26:09 EST 2015 tid=96: attributeAdded() session max inactive interval=90000
+    Mon Jan 26 09:26:09 EST 2015 tid=96: attributeAdded() attribute currentUser=2
+    Mon Jan 26 09:26:09 EST 2015 tid=96: <----------end----------
+    Mon Jan 26 09:26:09 EST 2015 tid=96: ----------begin--------->
+    Mon Jan 26 09:26:09 EST 2015 tid=96: attributeAdded() session id=CC176AE6928989DFE52683E664E92EE6
+    Mon Jan 26 09:26:09 EST 2015 tid=96: attributeAdded() session creation time=1422282369005 (Mon Jan 26 09:26:09 EST 2015)
+    Mon Jan 26 09:26:09 EST 2015 tid=96: attributeAdded() session last accessed time=1422282369005 (Mon Jan 26 09:26:09 EST 2015)
+    Mon Jan 26 09:26:09 EST 2015 tid=96: attributeAdded() session max inactive interval=90000
+    Mon Jan 26 09:26:09 EST 2015 tid=96: attributeAdded() attribute currentACL=Browser,Visitor
+    Mon Jan 26 09:26:09 EST 2015 tid=96: <----------end----------
+    
