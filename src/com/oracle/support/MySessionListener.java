@@ -15,42 +15,8 @@ import javax.servlet.http.HttpSessionBindingListener;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 
-/**
- * Servlet listener that can log various info on session events. Supply
- * configuration via system properties, of the form
- * 
- * -DMySessionListener.<methodName>=<option,option,...>
- * 
- * where methodName is one of
- * 
- * attributeRemoved
- * attributeReplaced
- * attributeRemoved
- * valueUnbound
- * valueBound
- * sessionCreated
- * sessionDestroyed
- * sessionDidActivate
- * sessionWillPassivate
- * 
- * and <option> is one of the following
- * 
- * STACK - show stack trace of current thread
- * SOURCE - show class originating this event
- * SESSION - show session info like sessionid, maxexpiry, etc
- * THREAD - show thread info
- * ALL_ATTRIBUTES - show all session attributes
- * CHANGED_ATTRIBUTE - show only the changed session attribute (if applicable)
- * ALL - show all of the above
- * 
- * multiple options can be used, comma delimited. E.g.
- * 
- * -DMySessionListener.sessionCreated=SESSION,THREAD
- * -DMySessionListener.sessionDestroyed=ALL
- * -DMySessionListener.attributeReplaced=CHANGED_ATTRIBUTE
- * -DMySessionListener.attributeAdded=CHANGED_ATTRIBUTE
- * -DMySessionListener.attributeRemoved=CHANGED_ATTRIBUTE
- * 
+/*
+ * See Readme.md for instructions
  * @author Phil Gleghorn
  */
 @WebListener
@@ -65,8 +31,9 @@ public class MySessionListener implements HttpSessionListener,
 	private final String THREAD = "THREAD";
 	private final String SOURCE = "SOURCE";
 	private final String ALL_ATTRIBUTES = "ALL_ATTRIBUTES";
-	private final String CHANGED_ATTRIBUTE = "CHANGED_ATTRIBUTE";
-	private final String ALL = "ALL";
+	private final String ATTRIBUTE = "ATTRIBUTE";
+	private final String VALUE = "VALUE";
+
 
 	private boolean isConfigured(String method, String configtype) {
 		Set<String> configTypes = configurations.get(method);
@@ -78,54 +45,93 @@ public class MySessionListener implements HttpSessionListener,
 
 	private void showInfo(String method, String source, String clazz,
 			HttpSession hs, Thread t, String name, Object value) {
-		if (isConfigured(method, SOURCE) || isConfigured(method, ALL)) {
-			log(method + "() source=" + source + ", class=" + clazz);
-		}
-		if (isConfigured(method, STACK) || isConfigured(method, ALL)) {
-			StackTraceElement[] cause = Thread.currentThread().getStackTrace();
-			for (int i = 0; i < cause.length; i++) {
-				log(method + "() stack " + cause[i].getClassName() + "."
-						+ cause[i].getMethodName() + "() ["
-						+ cause[i].getFileName() + ":"
-						+ cause[i].getLineNumber() + "]");
+
+		log("----------begin--------->");
+		try {
+			if (isConfigured(method, SOURCE)) {
+				log(method + "() source=" + source + ", class=" + clazz);
 			}
+		} catch (Exception e) {
+			log(method + "() failed to log " + STACK + " due to: " + e);
 		}
-		if (isConfigured(method, SESSION) || isConfigured(method, ALL)) {
-			log(method + "() session id=" + hs.getId());
-			log(method + "() session creation time=" + hs.getCreationTime()
-					+ " (" + new Date(hs.getCreationTime()) + ")");
-			log(method + "() session last accessed time="
-					+ hs.getLastAccessedTime() + " ("
-					+ new Date(hs.getLastAccessedTime()) + ")");
-			log(method + "() session max inactive interval="
-					+ hs.getMaxInactiveInterval());
+
+		try {
+			if (isConfigured(method, STACK)) {
+				StackTraceElement[] cause = Thread.currentThread()
+						.getStackTrace();
+				for (int i = 0; i < cause.length; i++) {
+					log(method + "() stack " + cause[i].getClassName() + "."
+							+ cause[i].getMethodName() + "() ["
+							+ cause[i].getFileName() + ":"
+							+ cause[i].getLineNumber() + "]");
+				}
+			}
+		} catch (Exception e) {
+			log(method + "() failed to log " + STACK + " due to: " + e);
 		}
-		if (isConfigured(method, THREAD) || isConfigured(method, ALL)) {
-			log(method + "() thread id=" + t.getId());
-			log(method + "() thread name=" + t.getName());
-			log(method + "() thread priority=" + t.getPriority());
-			log(method + "() thread state=" + t.getState().toString());
+
+		try {
+			if (isConfigured(method, SESSION)) {
+				log(method + "() session id=" + hs.getId());
+				log(method + "() session creation time=" + hs.getCreationTime()
+						+ " (" + new Date(hs.getCreationTime()) + ")");
+				log(method + "() session last accessed time="
+						+ hs.getLastAccessedTime() + " ("
+						+ new Date(hs.getLastAccessedTime()) + ")");
+				log(method + "() session max inactive interval="
+						+ hs.getMaxInactiveInterval());
+			}
+		} catch (Exception e) {
+			log(method + "() failed to log " + SESSION + " due to: " + e);
 		}
-		if (isConfigured(method, ALL_ATTRIBUTES) || isConfigured(method, ALL)) {
-			try {
+
+		try {
+			if (isConfigured(method, THREAD)) {
+				log(method + "() thread id=" + t.getId());
+				log(method + "() thread name=" + t.getName());
+				log(method + "() thread priority=" + t.getPriority());
+				log(method + "() thread state=" + t.getState().toString());
+			}
+		} catch (Exception e) {
+			log(method + "() failed to log " + THREAD + " due to: " + e);
+		}
+
+		try {
+			if (isConfigured(method, ALL_ATTRIBUTES)) {
 				Enumeration<String> attrNames = hs.getAttributeNames();
 				while (attrNames.hasMoreElements()) {
 					String attrName = attrNames.nextElement();
 					log(method + "() all_attributes " + attrName + "="
 							+ hs.getAttribute(attrName));
 				}
-			} catch (IllegalStateException e) {
-				// log(e.toString());
 			}
+		} catch (Exception e) {
+			log(method + "() failed to log " + ALL_ATTRIBUTES + " due to: " + e);
 		}
-		if (isConfigured(method, CHANGED_ATTRIBUTE) || isConfigured(method, ALL)) {
-			log(method + "() changed_attribute " + name + "=" + value);
+
+		try {
+			if (isConfigured(method, ATTRIBUTE)) {
+				log(method + "() attribute " + name + "=" + value);
+			}
+		} catch (Exception e) {
+			log(method + "() failed to log " + ATTRIBUTE + " due to: " + e);
 		}
+
+		try {
+			if (isConfigured(method, VALUE)) {
+				log(method + "() value " + name + "=" + value);
+			}
+		} catch (Exception e) {
+			log(method + "() failed to log " + VALUE + " due to: " + e);
+		}
+
+		log("<----------end----------");
 	}
 
 	private void log(String msg) {
 		long tid = Thread.currentThread().getId();
-		System.out.println("t" + tid + ": " + msg);
+		Date now = new Date();
+		System.out.println(now + " tid=" + tid + ": " + msg);
 	}
 
 	/**
@@ -170,7 +176,8 @@ public class MySessionListener implements HttpSessionListener,
 	 */
 	public void attributeAdded(HttpSessionBindingEvent arg0) {
 		showInfo("attributeAdded", arg0.getSource().toString(), arg0.getClass()
-				.toString(), arg0.getSession(), Thread.currentThread(), arg0.getName(), arg0.getValue());
+				.toString(), arg0.getSession(), Thread.currentThread(),
+				arg0.getName(), arg0.getValue());
 	}
 
 	/**
@@ -178,7 +185,8 @@ public class MySessionListener implements HttpSessionListener,
 	 */
 	public void valueUnbound(HttpSessionBindingEvent arg0) {
 		showInfo("valueUnbound", arg0.getSource().toString(), arg0.getClass()
-				.toString(), arg0.getSession(), Thread.currentThread(), arg0.getName(), arg0.getValue());
+				.toString(), arg0.getSession(), Thread.currentThread(),
+				arg0.getName(), arg0.getValue());
 	}
 
 	/**
@@ -194,8 +202,9 @@ public class MySessionListener implements HttpSessionListener,
 	 * @see HttpSessionActivationListener#sessionWillPassivate(HttpSessionEvent)
 	 */
 	public void sessionWillPassivate(HttpSessionEvent arg0) {
-		showInfo("sessionWillPassivate", arg0.getSource().toString(), arg0.getClass()
-				.toString(), arg0.getSession(), Thread.currentThread(), "", "");
+		showInfo("sessionWillPassivate", arg0.getSource().toString(), arg0
+				.getClass().toString(), arg0.getSession(),
+				Thread.currentThread(), "", "");
 	}
 
 	/**
@@ -203,7 +212,8 @@ public class MySessionListener implements HttpSessionListener,
 	 */
 	public void valueBound(HttpSessionBindingEvent arg0) {
 		showInfo("valueBound", arg0.getSource().toString(), arg0.getClass()
-				.toString(), arg0.getSession(), Thread.currentThread(), arg0.getName(), arg0.getValue());
+				.toString(), arg0.getSession(), Thread.currentThread(),
+				arg0.getName(), arg0.getValue());
 	}
 
 	/**
@@ -231,5 +241,5 @@ public class MySessionListener implements HttpSessionListener,
 				.getClass().toString(), arg0.getSession(),
 				Thread.currentThread(), "", "");
 	}
-
+	
 }
